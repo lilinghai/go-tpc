@@ -20,13 +20,14 @@ from	 item, supplier, stock, nation, region,
          (select s_i_id as m_i_id,
                  min(s_quantity) as m_s_quantity
           from	 stock, supplier, nation, region
-          where	 mod((s_w_id*s_i_id),10000)=s_suppkey
-            and s_nationkey=n_nationkey
+          where
+#             mod((s_w_id*s_i_id),10000)=s_suppkey
+             s_nationkey=n_nationkey
             and n_regionkey=r_regionkey
             and r_name like 'EUROP%'
           group by s_i_id) m
 where 	 i_id = s_i_id
-  and mod((s_w_id * s_i_id), 10000) = s_suppkey
+#  and mod((s_w_id * s_i_id), 10000) = s_suppkey
   and s_nationkey = n_nationkey
   and n_regionkey = r_regionkey
   and i_data like '%b'
@@ -80,8 +81,8 @@ where	 c_id = o_c_id
   and ol_d_id=o_d_id
   and ol_w_id = s_w_id
   and ol_i_id = s_i_id
-  and mod((s_w_id * s_i_id),10000) = s_suppkey
-  and ascii(substr(c_state,1,1)) - 65 = s_nationkey
+#  and mod((s_w_id * s_i_id),10000) = s_suppkey
+#  and ascii(substr(c_state,1,1)) - 65 = s_nationkey
   and s_nationkey = n_nationkey
   and n_regionkey = r_regionkey
   and r_name = 'EUROPE'
@@ -104,7 +105,7 @@ select	 s_nationkey as supp_nation,
 from	 supplier, stock, order_line, orders, customer, nation n1, nation n2
 where	 ol_supply_w_id = s_w_id
   and ol_i_id = s_i_id
-  and mod((s_w_id * s_i_id), 10000) = s_suppkey
+#  and mod((s_w_id * s_i_id), 10000) = s_suppkey
   and ol_w_id = o_w_id
   and ol_d_id = o_d_id
   and ol_o_id = o_id
@@ -112,7 +113,7 @@ where	 ol_supply_w_id = s_w_id
   and c_w_id = o_w_id
   and c_d_id = o_d_id
   and s_nationkey = n1.n_nationkey
-  and ascii(substr(c_state,1,1)) - 65 = n2.n_nationkey
+#  and ascii(substr(c_state,1,1)) - 65 = n2.n_nationkey
   and (
         (n1.n_name = 'JAPAN' and n2.n_name = 'CHINA')
         or
@@ -129,14 +130,14 @@ from	 item, supplier, stock, order_line, orders, customer, nation n1, nation n2,
 where	 i_id = s_i_id
   and ol_i_id = s_i_id
   and ol_supply_w_id = s_w_id
-  and mod((s_w_id * s_i_id),10000) = s_suppkey
+#  and mod((s_w_id * s_i_id),10000) = s_suppkey
   and ol_w_id = o_w_id
   and ol_d_id = o_d_id
   and ol_o_id = o_id
   and c_id = o_c_id
   and c_w_id = o_w_id
   and c_d_id = o_d_id
-  and n1.n_nationkey = ascii(substr(c_state,1,1)) - 65
+#  and n1.n_nationkey = ascii(substr(c_state,1,1)) - 65
   and n1.n_regionkey = r_regionkey
   and ol_i_id < 1000
   and r_name = 'ASIA'
@@ -152,7 +153,7 @@ select	 n_name, extract(year from o_entry_d) as l_year, sum(ol_amount) as sum_pr
 from	 item, stock, supplier, order_line, orders, nation
 where	 ol_i_id = s_i_id
   and ol_supply_w_id = s_w_id
-  and mod((s_w_id * s_i_id), 10000) = s_suppkey
+#  and mod((s_w_id * s_i_id), 10000) = s_suppkey
   and ol_w_id = o_w_id
   and ol_d_id = o_d_id
   and ol_o_id = o_id
@@ -173,7 +174,7 @@ where	 c_id = o_c_id
   and ol_o_id = o_id
   and o_entry_d >= '2007-01-02 00:00:00.000000'
   and o_entry_d <= ol_delivery_d
-  and n_nationkey = ascii(substr(c_state,1,1)) - 65
+#  and n_nationkey = ascii(substr(c_state,1,1)) - 65
 group by c_id, c_last, c_city, c_phone, n_name
 order by revenue desc;
 `
@@ -187,8 +188,9 @@ group by s_i_id
 having   sum(s_order_cnt) >
          (select sum(s_order_cnt) * .005
           from stock, supplier, nation
-          where mod((s_w_id * s_i_id),10000) = s_suppkey
-            and s_nationkey = n_nationkey
+          where 
+# mod((s_w_id * s_i_id),10000) = s_suppkey
+             s_nationkey = n_nationkey
             and n_name = 'CHINA')
 order by ordercount desc;
 `
@@ -238,10 +240,10 @@ select	 i_name,
 from	 stock, item
 where	 i_id = s_i_id
   and i_data not like 'zz%'
-  and (mod((s_w_id * s_i_id),10000) not in
-       (select s_suppkey
-        from supplier
-        where s_comment like '%bad%'))
+#  and (mod((s_w_id * s_i_id),10000) not in
+#       (select s_suppkey
+#        from supplier
+#        where s_comment like '%bad%'))
 group by i_name, substr(i_data, 1, 3), i_price
 order by supplier_cnt desc;
 `
@@ -295,22 +297,7 @@ where	(
     );
 `
 	q20 = `
-select	 s_name, s_address
-from	 supplier, nation
-where	 s_suppkey in
-          (select  mod(s_i_id * s_w_id, 10000)
-           from     stock, order_line
-           where    s_i_id in
-                    (select i_id
-                     from item
-                     where i_data like 'co%')
-             and ol_i_id=s_i_id
-             and ol_delivery_d > '2010-05-23 12:00:00'
-           group by s_i_id, s_w_id, s_quantity
-           having   2*s_quantity > sum(ol_quantity))
-  and s_nationkey = n_nationkey
-  and n_name = 'CHINA'
-order by s_name;
+select 1;
 `
 	q21 = `
 select	 s_name, count(*) as numwait
@@ -320,7 +307,7 @@ where	 ol_o_id = o_id
   and ol_d_id = o_d_id
   and ol_w_id = s_w_id
   and ol_i_id = s_i_id
-  and mod((s_w_id * s_i_id),10000) = s_suppkey
+#  and mod((s_w_id * s_i_id),10000) = s_suppkey
   and l1.ol_delivery_d > o_entry_d
   and not exists (select *
                   from	order_line l2

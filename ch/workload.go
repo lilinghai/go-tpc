@@ -187,7 +187,9 @@ func (w Workloader) Run(ctx context.Context, threadID int) error {
 	query := queries[queryName]
 
 	start := time.Now()
-	rows, err := s.Conn.QueryContext(ctx, query)
+	//s.Conn.ExecContext(ctx, "set @@tidb_isolation_read_engines='tiflash'")
+	rows, err := s.Conn.QueryContext(ctx, "set @@tidb_isolation_read_engines='tiflash'; "+query)
+	//s.Conn.ExecContext(ctx, "set @@tidb_isolation_read_engines='tikv'")
 	w.measurement.Measure(queryName, time.Now().Sub(start), err)
 	if err != nil {
 		return fmt.Errorf("execute query %s failed %v", queryName, err)
